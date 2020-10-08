@@ -11,8 +11,17 @@ export class Scion {
     get runner() { return this.state.runner }
     get renderer() { return this.runner.renderer }
     get ctx() { return this.renderer.ctx }
+    get renMS() { return this.renderer.renMS }
 
     get anchorAbs() { return this.anchorPos.add(this.parent.anchorAbs)  }
+
+    preDrawTick(){
+        this.preDrawTickContents()
+        for (let child of this.children) {
+            child.preDrawTick()
+        }
+    }
+    preDrawTickContents(){ }
 
     draw() {
         this.drawContents()
@@ -32,4 +41,3 @@ export class Ancestor extends Scion {
     get state() { return this._state }
     get anchorAbs() { return vecs.Vec2(0,0) }
 }
-

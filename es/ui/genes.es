@@ -27,7 +27,7 @@ export class AnimatedScrollBackground extends drawscions.Scion {
             this.localCtx.drawImage(image, 0, yDraw)
         }
     }
-    get lTick() { return this.renderer.localMS / 150 }
+    get lTick() { return this.renderer.renMS / 150 }
 
     drawContents() {
        this.ctx.drawImage(this.localSprite, 0, this.sHeight - ((this.lTick*6)%this.sHeight), this.sWidth, this.height, ...this.anchorAbs.xy, this.sWidth, this.height)
@@ -103,7 +103,7 @@ class SegmentBracket extends drawscions.Scion {
     get dnaString() { return this.parent.dnaString }
     get segment() { return this.dnaString.slice(...this.segPos) }
 
-    get localIndex() { return this.parent.brackets.indexOf(this) } 
+    get localIndex() { return this.parent.brackets.indexOf(this) }
     get localIndexChar() { return String.fromCharCode("A".charCodeAt(0)+this.localIndex) }
 
     drawContents() {
@@ -132,7 +132,7 @@ class SegmentDesc extends drawscions.Scion {
     get segment() { return this.dnaString.slice(...this.segPos) }
     get mutation() { return this.parent.state.ruleset.lookup(this.segment) }
 
-    get localIndex() { return this.parent.descs.indexOf(this) } 
+    get localIndex() { return this.parent.descs.indexOf(this) }
     get localIndexChar() { return String.fromCharCode("A".charCodeAt(0)+this.localIndex) }
 
     drawContents() {
@@ -168,8 +168,8 @@ export class AbstractMutationBracketsPanel extends drawscions.Scion {
     }
 
     get ruleset() { return this.state.ruleset }
-    get dnaString() { return this.parent.dnaString } 
-    get activeSegmentPoses() { return this.state.ruleset.getActiveSegmentPoses(this.dnaString) } 
+    get dnaString() { return this.parent.dnaString }
+    get activeSegmentPoses() { return this.state.ruleset.getActiveSegmentPoses(this.dnaString) }
 
     get genesPanel() { return this.parent.genesPanel }
 

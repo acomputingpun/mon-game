@@ -136,13 +136,12 @@ export class Renderer {
         this.ctx.textBaseline = "top"
         this.ctx.fillStyle=colours.BORDER
 
+        this.curNode.preDrawTick()
         this.curNode.draw()
         this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height)
-
-        this.ctx.drawImage(this.img.geneA, 10, 10)
     }
 
-    get localMS() {
+    get renMS() {
         return this.drawMS - this.firstDrawMS
     }
 
@@ -151,7 +150,9 @@ export class Renderer {
         this.ctx.textAlign = "left"
         this.ctx.textBaseline = "top"
         this.ctx.fillStyle=colours.BORDER
-        this.ctx.fillText("TrueMS " + (this.localMS), 2, 2)
+        this.ctx.fillText("TrueMS " + (this.renMS), 2, 2)
+
+        this.ctx.drawImage(this.img.geneA, 10, 10)
     }
 
 //
@@ -173,12 +174,12 @@ export class Renderer {
         this.cursor.setPos(mousePos)
         this.panel.warpMouseUp(mousePos)
         this.cursor.clickedDownOn = null
-    }   
+    }
     warpMouseOut(event) {
         this.cursor.clickedDownOn = null
         this.cursor.setPos( vecs.Vec2(-100, -100) )
     }
-    
+
     warpKeydown(event) {
         this.curNode.warpKeydown(event)
     }
@@ -212,7 +213,7 @@ export class Renderer {
     }
 
     drawGene(gene, xDraw, yDraw, pSize=6) {
-        let img = this.img[`${gene.img}__${pSize}`] || this.img.geneUNDEF 
+        let img = this.img[`${gene.img}__${pSize}`] || this.img.geneUNDEF
         this.ctx.drawImage(img, xDraw, yDraw)
     }
 
@@ -223,7 +224,7 @@ export class Renderer {
             xDraw += (charSprite.width + pSize)
         }
     }
-    
+
     yRepeated(img, height) {
         let nSprite = document.createElement("canvas")
         let nCtx = nSprite.getContext('2d');

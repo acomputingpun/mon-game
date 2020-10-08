@@ -264,8 +264,8 @@ export class CurrentStringSelectorFlyer extends ui_genes.AbstractSelectGenesPane
 }
 
 class InsertHighlightFlyer extends drawscions.Scion {
-    get lTick() { return (this.renderer.localMS / 400) }
-    
+    get lTick() { return (this.renderer.renMS / 400) }
+
     drawContents() {
         this.ctx.fillStyle = "#ffffff"
         this.ctx.globalAlpha = 0.6 + (Math.sin(this.lTick) * 0.15)
