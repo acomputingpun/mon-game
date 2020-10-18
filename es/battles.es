@@ -9,12 +9,27 @@ import * as menus from '/es/menus.es'
 import * as actions from '/es/actions.es'
 
 export class BattleMonster {
-    constructor(monster) {
+    constructor(parent, monster) {
+        this.parent = parent
         this.monster = monster
 
         this.health = 100
 
-        this.possibleActions = [new BodySlam(this), new Crush(this), new Overwhelm(this)]
+        this.possibleActions = [new actions.BodySlam(this), new actions.Crush(this), new actions.Overwhelm(this)]
+    }
+
+    get otherMonster() {
+        if (this == this.parent.playerMonster) {
+            return this.parent.enemyMonster
+        } else if (this == this.parent.enemyMonster) {
+            return this.parent.playerMonster
+        } else {
+            throw `Error: tried to get OtherMOnster of monster not in parent battle - something has gone very wrong!`
+        }
+    }
+
+    get shortName() {
+        return this.monster.name
     }
 
     canSubmitAction(action) {
@@ -23,6 +38,16 @@ export class BattleMonster {
 
     doRequestActionFrom(node) {
         throw `To be overridden!`
+    }
+
+    lookupStatValue(statName) {
+        if (statName == "strength") {
+            return this.monster.strength
+        } else if (statName == "endurance") {
+            return this.monster.endurance
+        } else {
+            throw `Error - lookup of invald stat value ${statName}`
+        }
     }
 }
 
@@ -48,8 +73,8 @@ export class Battle {
     constructor(location, monster) {
         this.location = location
 
-        this.playerMonster = new PlayerBattleMonster(monster)
-        this.enemyMonster = new EnemyBattleMonster(null)
+        this.playerMonster = new PlayerBattleMonster(this, monster)
+        this.enemyMonster = new EnemyBattleMonster(this, location.monster)
 
         this.curTurn = this.playerMonster
     }
@@ -67,7 +92,6 @@ export class Battle {
             throw `ERROR: battle initiative fault - turn assigned to nonexistant actor`
         }
     }
-
 }
 
 class ActionMenu extends menus.MenuPanel {
@@ -88,7 +112,14 @@ class ActionMenu extends menus.MenuPanel {
     }
 
     doSelect() {
-        this.parent.doSubmitAction(this.selectedMenuItem.data)
+        if (this.parent.doSubmitAction(this.selectedMenuItem.data)) {
+            this.selectedIndex = null
+        }
+    }
+    doRefresh() {
+        // TODO: Does an animation to flicker the menu as it repopulates itself
+        this.refreshMenuItems()
+        this.selectedIndex = 0
     }
 
     drawContents() {
@@ -346,6 +377,7 @@ export class BattleNode extends nodes.Node {
 
     doActionMenu() {
         this.activeWarpPanel = this.actionMenu
+        this.actionMenu.doRefresh()
     }
 
     doSubmitAction(action) {
@@ -353,8 +385,10 @@ export class BattleNode extends nodes.Node {
             let rolledAction = action.roll()
             rolledAction.doApply(this)
             this.activeWarpPanel = this.messageTickerPanel
+            return true
         } else {
             console.log("Unable to submit action!")
+            return false
         }
     }
 
