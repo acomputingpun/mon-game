@@ -1,11 +1,12 @@
 import * as vecs from '/es/vectors.es'
 import * as dirconst from '/es/dirconst.es'
+import * as utils from '/es/utils.es'
 
 import * as drawscions from '/es/ui/drawscions.es'
+import * as animas from '/es/ui/animas.es'
 import * as nodes from '/es/nodes.es'
 import * as menus from '/es/menus.es'
-import * as utils from '/es/utils.es'
-import * as animas from '/es/ui/animas.es'
+import * as actions from '/es/actions.es'
 
 export class BattleMonster {
     constructor(monster) {
@@ -13,7 +14,7 @@ export class BattleMonster {
 
         this.health = 100
 
-        this.possibleActions = [new BodySlam(), new Crush(), new Overwhelm()]
+        this.possibleActions = [new BodySlam(this), new Crush(this), new Overwhelm(this)]
     }
 
     canSubmitAction(action) {
@@ -41,46 +42,6 @@ export class EnemyBattleMonster extends BattleMonster {
     selectAction() {
         return this.possibleActions[0]
     }
-}
-
-export class BattleAction {
-    constructor() {
-        this.tickerMessage = `error: ticker message not set for action ${this.shortName}`
-        this.damage = 0
-    }
-    get monster() { return this._monster }
-
-    roll() {
-        this.damage = 5
-    }
-
-    get desc() { throw "To be overridden!" }
-    get damageMods() {}
-
-    get shortText() { throw "To be overridden!" }
-    get shortName() { return "?UNDEF ACTION?" }
-}
-
-class BodySlam extends BattleAction {
-    constructor() {
-        super()
-    }
-    get shortName() { return "BodySlam" }
-    getDamage() { return this.monster.strength }
-}
-
-class Crush extends BattleAction {
-    constructor() {
-        super()
-    }
-    get shortName() { return "Crush" }
-}
-
-class Overwhelm extends BattleAction {
-    constructor() {
-        super()
-    }
-    get shortName() { return "Overwhelm" }
 }
 
 export class Battle {
@@ -258,32 +219,35 @@ class MapPanel extends drawscions.Scion {
 }
 
 class BarAnima extends animas.Anima {
-    constructor(fillAmount, maxFill) {
-        super()
-        this._targetFill = fillAmount
-        this._baseFill = fillAmount
-        this._maxFill = maxFill
+    constructor(parent, initialValue, maxValue) {
+        super(parent)
+        this._targetValue = initialValue
+        this._baseValue = initialValue
+        this._maxValue = maxValue
     }
 
-    get durationMS () { return Math.abs(this._targetFill - this._baseFill) * this.fillMoveMS }
+    get durationMS () { return Math.abs(this._targetValue - this._baseValue) * this.fillMoveMS }
     get fillMoveMS() { return 10 }
 
-    get fill() {
+    get value() {
         if (!this.running) {
-            return this._targetFill
+            return this._targetValue
         } else {
-            return this._baseFill + ((this._baseFill - this._targetFill) * this.frac)
+            return this._baseValue + ((this._baseValue - this._targetValue) * this.frac)
         }
     }
-    get fillFrac() {
-        return this.fill / this._maxFill
+    get valueFrac() {
+        return this.value / this._maxValue
     }
 
+    adjustTo(value) {
+        this.adjust( this.value - value )
+    }
 
     adjust(delta) {
-        newBaseFill = this.fill
-        this._baseFill = newBaseFill
-        this._targetFill = this._targetFill + delta
+        let newBaseValue = this.value
+        this._baseValue = newBaseValue
+        this._targetValue = this._targetValue + delta
         this.doStart()
     }
 }
@@ -291,7 +255,7 @@ class BarAnima extends animas.Anima {
 class MonsterHealthBar extends drawscions.Scion {
     constructor(parent) {
         super(parent)
-        this.barAnima = new BarAnima(300, 480)
+        this.barAnima = new BarAnima(this, 300, 480)
     }
 
     drawContents() {
@@ -302,6 +266,10 @@ class MonsterHealthBar extends drawscions.Scion {
         this.ctx.fillRect(...this.anchorAbs.xy, this.barAnima.fillFrac * 480, 25)
 
         this.renderer.drawChars("monhel", ...this.anchorAbs.xy)
+    }
+
+    takeDamage(damage) {
+        this.barAnima.adjust( damage )
     }
 }
 
@@ -351,16 +319,16 @@ export class BattleNode extends nodes.Node {
         this.monsterStatsPanel = new MonsterStatsPanel(this)
         this.monsterStatsPanel.anchorPos = vecs.Vec2(186, 48)
 
-        this.monsterHealthBar = new MonsterHealthBar(this)
-        this.monsterHealthBar.anchorPos = vecs.Vec2(6,6)
+        this.playerHealthBar = new MonsterHealthBar(this)
+        this.playerHealthBar.anchorPos = vecs.Vec2(6,6)
 
         this.enemyHealthBar = new EnemyHealthBar(this)
-        this.enemyHealthBar.anchorPos = vecs.Vec2(480,6)
+        this.enemyHealthBar.anchorPos = vecs.Vec2(490,6)
 
         this.messageTickerPanel = new MessageTickerPanel(this)
         this.messageTickerPanel.anchorPos = vecs.Vec2(480, 504)
 
-        this.children = [this.actionMenu, this.actionFocusPanel, this.messageTickerPanel, this.monsterHealthBar, this.enemyHealthBar, this.monsterStatsPanel, this.mapPanel]
+        this.children = [this.actionMenu, this.actionFocusPanel, this.messageTickerPanel, this.playerHealthBar, this.enemyHealthBar, this.monsterStatsPanel, this.mapPanel]
 
         this.advanceBattleWarp = new AdvancingActionWarp(this)
 
@@ -382,9 +350,9 @@ export class BattleNode extends nodes.Node {
 
     doSubmitAction(action) {
         if (this.battle.curTurn.canSubmitAction(action)) {
-            action.roll()
+            let rolledAction = action.roll()
+            rolledAction.doApply(this)
             this.activeWarpPanel = this.messageTickerPanel
-            this.messageTickerPanel.addMessage( action.tickerMessage )
         } else {
             console.log("Unable to submit action!")
         }
@@ -421,5 +389,16 @@ export class BattleNode extends nodes.Node {
     }
     warpCancelKey() {
         this.activeWarpPanel.doCancel()
+    }
+
+    lookupHealthBar(monster) {
+        if (monster == this.battle.playerMonster) {
+            return this.playerHealthBar
+        } else if (monster == this.battle.enemyMonster) {
+            return this.enemyHealthBar
+        } else {
+            console.log("monster is", monster)
+            throw `ERROR: looking up healthbar of monster ${monster} not in battle!`
+        }
     }
 }

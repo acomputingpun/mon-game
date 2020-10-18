@@ -1,5 +1,6 @@
 export class Anima {
-    constructor() {
+    constructor(parent) {
+        this.parent = parent
         this.startMS = null
     }
     get renMS() { return this.parent.renMS }
