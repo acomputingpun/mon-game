@@ -7,6 +7,7 @@ export class Anima {
     get frac() { return Math.min(this.localMS / this.durationMS, 1) }
     get finished() { return this.frac >= 1 }
     get started() { return this.startMS != null }
+    get running() { return this.started && !this.finished }
 
     get durationMS() { throw `Not implemeted durationMS() of anima ${this}` }
 

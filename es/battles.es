@@ -5,7 +5,7 @@ import * as drawscions from '/es/ui/drawscions.es'
 import * as nodes from '/es/nodes.es'
 import * as menus from '/es/menus.es'
 import * as utils from '/es/utils.es'
-import * as animas from '/es/animas.es'
+import * as animas from '/es/ui/animas.es'
 
 export class BattleMonster {
     constructor(monster) {
@@ -182,7 +182,7 @@ class MessageTickerPanel extends drawscions.Scion {
     doCancel() {
     }
     addMessage(messageText) {
-        let message = new Message(this, messageText)
+        let message = new Message(this, messageText).doStart()
         this.messages.push(message)
         this.activeMessages.push(message)
     }
@@ -190,6 +190,7 @@ class MessageTickerPanel extends drawscions.Scion {
 
 class Message extends animas.Anima {
     constructor(parent, messageText) {
+        super()
         this.parent = parent
         this.messageText = messageText
     }
@@ -226,19 +227,62 @@ class MapPanel extends drawscions.Scion {
     }
 }
 
+class BarAnima extends animas.Anima {
+    constructor(fillAmount, maxFill) {
+        super()
+        this._targetFill = fillAmount
+        this._baseFill = fillAmount
+        this._maxFill = maxFill
+    }
+
+    get durationMS () { return Math.abs(this._targetFill - this._baseFill) * this.fillMoveMS }
+    get fillMoveMS() { return 10 }
+
+    get fill() {
+        if (!this.running) {
+            return this._targetFill
+        } else {
+            return this._baseFill + ((this._baseFill - this._targetFill) * this.frac)
+        }
+    }
+    get fillFrac() {
+        return this.fill / this._maxFill
+    }
+
+
+    adjust(delta) {
+        newBaseFill = this.fill
+        this._baseFill = newBaseFill
+        this._targetFill = this._targetFill + delta
+        this.doStart()
+    }
+}
+
 class MonsterHealthBar extends drawscions.Scion {
+    constructor(parent) {
+        super(parent)
+        this.barAnima = new BarAnima(300, 480)
+    }
+
     drawContents() {
         this.ctx.fillStyle="#F0B"
         this.ctx.fillRect(...this.anchorAbs.xy, 480, 30)
-        this.renderer.drawChars("monhel", ...this.anchorAbs.xy)
 
-        super.drawContents()
+        this.ctx.fillStyle="#B5D"
+        this.ctx.fillRect(...this.anchorAbs.xy, this.barAnima.fillFrac * 480, 25)
+
+        this.renderer.drawChars("monhel", ...this.anchorAbs.xy)
     }
 }
+
 class EnemyHealthBar extends MonsterHealthBar {
     drawContents() {
         this.ctx.fillStyle="#C0C"
         this.ctx.fillRect(...this.anchorAbs.xy, 480, 30)
+
+        this.ctx.fillStyle="#B5D"
+        this.ctx.fillRect(...this.anchorAbs.xy, this.barAnima.fillFrac * 480, 25)
+
         this.renderer.drawChars("enhel", ...this.anchorAbs.xy)
     }
 }
@@ -329,12 +373,22 @@ export class BattleNode extends nodes.Node {
         }
     }
     doEnemyAction() {
+        let action = this.battle.enemyMonster.selectAction()
+        if (action != null) {
+            action.roll()
+            this.activeWarpPanel = this.messageTickerPanel
+            this.messageTickerPanel.addMessage( action.tickerMessage )
+        } else {
+            console.log("Unable to submit enemy action!")
+        }
     }
 
     doCompleteAction(action) {
         if (this.battle.curTurn == this.battle.playerMonster) {
+            console.log("Completed enemy turn, now player turn to choose action!")
             this.doActionMenu()
         } else {
+            console.log("Completed player turn, now enemy turn!")
             this.doEnemyAction()
         }
     }
