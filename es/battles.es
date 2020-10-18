@@ -304,19 +304,6 @@ export class AdvancingActionWarp {
 
 }
 
-/*export class PerformAttackWarp extends AdvancingActionWarp {
-    constructor(parent) {
-        this.parent = parent
-    }
-
-    begin() {
-        this.parent.messageTickerPanel.addMessage("This is a test message that is occuring because the player selected an attack!")
-    }
-
-    drawContents() {
-    }
-}*/
-
 export class BattleNode extends nodes.Node {
     constructor(battle) {
         super(battle.state)
@@ -392,28 +379,6 @@ export class BattleNode extends nodes.Node {
             this.doEnemyAction()
         }
     }
-
-    /*
-    doAdvanceBattle() {
-        if (this.battle.curTurn == this.battle.playerMonster) {
-            if (this.battle.playerMonster.curAction == null) {
-                if (this.activeWarp == null) {
-                    this.activeWarp = this.actionMenu
-                } else {
-                    throw ("Well this shouldn't have happened!")
-                }
-            } else {
-                if (this.activeWarp != this.messageTickerPanel) {
-                    this.activeWarp = this.advanceBattleWarp
-                }
-            }
-        } else if (this.battle.curTurn == this.battle.enemyMonster) {
-            this.activeWarp = this.advanceBattleWarp
-        } else {
-            throw ("ERROR: battle turn incompatibility")
-        }
-    }
-    */
 
     warpKeydown(event) {
         if (event.key == "ArrowDown") {
