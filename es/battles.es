@@ -5,6 +5,7 @@ import * as drawscions from '/es/ui/drawscions.es'
 import * as nodes from '/es/nodes.es'
 import * as menus from '/es/menus.es'
 import * as utils from '/es/utils.es'
+import * as animas from '/es/animas.es'
 
 export class BattleMonster {
     constructor(monster) {
@@ -19,6 +20,8 @@ export class BattleMonster {
         return this.possibleActions.includes(action)
     }
 }
+
+
 
 export class BattleAction {
     constructor() {
@@ -185,27 +188,21 @@ class MessageTickerPanel extends drawscions.Scion {
     }
 }
 
-class Message {
+class Message extends animas.Anima {
     constructor(parent, messageText) {
         this.parent = parent
-        this.startMS = this.renMS
         this.messageText = messageText
     }
-    get renMS() { return this.parent.renMS }
-    get localMS() { return this.renMS - this.startMS }
-    get finishMS() { return this.messageText.length * 25 }
-    get frac() { return Math.min(this.localMS / this.finishMS, 1) }
-    get finished() { return this.frac >= 1 }
+
+    get durationMS() { return this.messageText.length * this.letterMS }
+    get letterMS() { return 25 }
 
     get visibleText() {
         if (this.finished) {
             return this.messageText
         } else {
-            return this.messageText.slice( 0, this.localMS / 25 )
+            return this.messageText.slice( 0, this.localMS / this.letterMS )
         }
-    }
-    doFinish() {
-        this.startMS = this.renMS - this.finishMS
     }
 }
 
@@ -263,7 +260,7 @@ export class AdvancingActionWarp {
 
 }
 
-export class PerformAttackWarp extends AdvancingActionWarp {
+/*export class PerformAttackWarp extends AdvancingActionWarp {
     constructor(parent) {
         this.parent = parent
     }
@@ -274,7 +271,7 @@ export class PerformAttackWarp extends AdvancingActionWarp {
 
     drawContents() {
     }
-}
+}*/
 
 export class BattleNode extends nodes.Node {
     constructor(battle) {
