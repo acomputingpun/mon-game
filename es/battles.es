@@ -19,9 +19,29 @@ export class BattleMonster {
     canSubmitAction(action) {
         return this.possibleActions.includes(action)
     }
+
+    doRequestActionFrom(node) {
+        throw `To be overridden!`
+    }
 }
 
+export class PlayerBattleMonster extends BattleMonster {
+    doRequestActionFrom(node) {
+        console.log("Completed enemy turn, now player turn to choose action!")
+        node.doActionMenu()
+    }
+}
+export class EnemyBattleMonster extends BattleMonster {
+    doRequestActionFrom(node) {
+        console.log("Completed player turn, now enemy turn!")
+        let action = this.selectAction()
+        node.doSubmitAction(action)
+    }
 
+    selectAction() {
+        return this.possibleActions[0]
+    }
+}
 
 export class BattleAction {
     constructor() {
@@ -67,8 +87,8 @@ export class Battle {
     constructor(location, monster) {
         this.location = location
 
-        this.playerMonster = new BattleMonster(monster)
-        this.enemyMonster = null
+        this.playerMonster = new PlayerBattleMonster(monster)
+        this.enemyMonster = new EnemyBattleMonster(null)
 
         this.curTurn = this.playerMonster
     }
@@ -77,6 +97,16 @@ export class Battle {
     createNode() {
         return new BattleNode(this)
     }
+    advanceTurn() {
+        if (this.curTurn == this.playerMonster) {
+            this.curTurn = this.enemyMonster
+        } else if (this.curTurn == this.enemyMonster) {
+            this.curTurn = this.playerMonster
+        } else {
+            throw `ERROR: battle initiative fault - turn assigned to nonexistant actor`
+        }
+    }
+
 }
 
 class ActionMenu extends menus.MenuPanel {
@@ -97,7 +127,7 @@ class ActionMenu extends menus.MenuPanel {
     }
 
     doSelect() {
-        this.parent.doPlayerSubmitAction(this.selectedMenuItem.data)
+        this.parent.doSubmitAction(this.selectedMenuItem.data)
     }
 
     drawContents() {
@@ -144,7 +174,7 @@ class MessageTickerPanel extends drawscions.Scion {
 
     preDrawTickContents() {
         for (let message of this.activeMessages) {
-            console.log("checking", message, "AM", this.activeMessages)
+//            console.log("checking", message, "AM", this.activeMessages)
             if (message.finished) {
                 utils.aRemove(this.activeMessages, message)
             }
@@ -350,8 +380,8 @@ export class BattleNode extends nodes.Node {
         this.activeWarpPanel = this.actionMenu
     }
 
-    doPlayerSubmitAction(action) {
-        if (this.battle.playerMonster.canSubmitAction(action)) {
+    doSubmitAction(action) {
+        if (this.battle.curTurn.canSubmitAction(action)) {
             action.roll()
             this.activeWarpPanel = this.messageTickerPanel
             this.messageTickerPanel.addMessage( action.tickerMessage )
@@ -359,25 +389,10 @@ export class BattleNode extends nodes.Node {
             console.log("Unable to submit action!")
         }
     }
-    doEnemyAction() {
-        let action = this.battle.enemyMonster.selectAction()
-        if (action != null) {
-            action.roll()
-            this.activeWarpPanel = this.messageTickerPanel
-            this.messageTickerPanel.addMessage( action.tickerMessage )
-        } else {
-            console.log("Unable to submit enemy action!")
-        }
-    }
 
     doCompleteAction(action) {
-        if (this.battle.curTurn == this.battle.playerMonster) {
-            console.log("Completed enemy turn, now player turn to choose action!")
-            this.doActionMenu()
-        } else {
-            console.log("Completed player turn, now enemy turn!")
-            this.doEnemyAction()
-        }
+        this.battle.advanceTurn()
+        this.battle.curTurn.doRequestActionFrom(this)
     }
 
     warpKeydown(event) {
