@@ -17,9 +17,9 @@ export class BattleAction {
 }
 
 class AttackAction extends BattleAction {
-    doApply(node) {
-        node.messageTickerPanel.addMessage( this.tickerMessage )
-        node.lookupHealthBar(this.monster).takeDamage( this.damage )
+    doApply(runner) {
+        runner.addTickerMessage( this.tickerMessage )
+        runner.dealDamageTo( this.damage, this.otherMonster )
     }
 
     get damageBase() { throw "To be overridden!" }

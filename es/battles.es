@@ -36,7 +36,7 @@ export class BattleMonster {
         return this.possibleActions.includes(action)
     }
 
-    doRequestActionFrom(node) {
+    doRequestActionFrom(bRunner) {
         throw `To be overridden!`
     }
 
@@ -52,16 +52,16 @@ export class BattleMonster {
 }
 
 export class PlayerBattleMonster extends BattleMonster {
-    doRequestActionFrom(node) {
+    doRequestActionFrom(bRunner) {
         console.log("Completed enemy turn, now player turn to choose action!")
-        node.doActionMenu()
+        bRunner.node.doActionMenu()
     }
 }
 export class EnemyBattleMonster extends BattleMonster {
-    doRequestActionFrom(node) {
+    doRequestActionFrom(bRunner) {
         console.log("Completed player turn, now enemy turn!")
         let action = this.selectAction()
-        node.doSubmitAction(action)
+        bRunner.doSubmitAction(action)
     }
 
     selectAction() {
@@ -112,9 +112,7 @@ class ActionMenu extends menus.MenuPanel {
     }
 
     doSelect() {
-        if (this.parent.doSubmitAction(this.selectedMenuItem.data)) {
-            this.selectedIndex = null
-        }
+        this.parent.bRunner.doSubmitAction(this.selectedMenuItem.data)
     }
     doRefresh() {
         // TODO: Does an animation to flicker the menu as it repopulates itself
@@ -172,7 +170,7 @@ class MessageTickerPanel extends drawscions.Scion {
             }
         }
         if (this.activeMessages.length == 0 && this.hasFocus) {
-            this.parent.doCompleteAction()
+            this.parent.bRunner.doCompleteAction()
         }
     }
 
@@ -199,7 +197,7 @@ class MessageTickerPanel extends drawscions.Scion {
         for (let message of this.activeMessages) {
             message.doFinish()
         }
-        this.parent.doCompleteAction()
+        this.parent.bRunner.doCompleteAction()
     }
     doCancel() {
     }
@@ -258,13 +256,13 @@ class BarAnima extends animas.Anima {
     }
 
     get durationMS () { return Math.abs(this._targetValue - this._baseValue) * this.fillMoveMS }
-    get fillMoveMS() { return 10 }
+    get fillMoveMS() { return 30 }
 
     get value() {
         if (!this.running) {
             return this._targetValue
         } else {
-            return this._baseValue + ((this._baseValue - this._targetValue) * this.frac)
+            return this._baseValue + ((this._targetValue - this._baseValue) * this.frac)
         }
     }
     get valueFrac() {
@@ -286,33 +284,36 @@ class BarAnima extends animas.Anima {
 class MonsterHealthBar extends drawscions.Scion {
     constructor(parent) {
         super(parent)
-        this.barAnima = new BarAnima(this, 300, 480)
+        this.barAnima = new BarAnima(this, 90, 100)
     }
+
+    get xDrawSize() { return 480 }
 
     drawContents() {
         this.ctx.fillStyle="#F0B"
-        this.ctx.fillRect(...this.anchorAbs.xy, 480, 30)
+        this.ctx.fillRect(...this.anchorAbs.xy, this.xDrawSize, 30)
 
         this.ctx.fillStyle="#B5D"
-        this.ctx.fillRect(...this.anchorAbs.xy, this.barAnima.fillFrac * 480, 25)
+        this.ctx.fillRect(...this.anchorAbs.xy, this.barAnima.valueFrac * this.xDrawSize, 25)
 
-        this.renderer.drawChars("monhel", ...this.anchorAbs.xy)
+        this.renderer.drawChars(`${Math.trunc(this.barAnima.value)}`, ...this.anchorAbs.xy)
+//        this.renderer.drawChars("monhel", ...this.anchorAbs.xy)
     }
 
     takeDamage(damage) {
-        this.barAnima.adjust( damage )
+        this.barAnima.adjust( -damage )
     }
 }
 
 class EnemyHealthBar extends MonsterHealthBar {
     drawContents() {
         this.ctx.fillStyle="#C0C"
-        this.ctx.fillRect(...this.anchorAbs.xy, 480, 30)
+        this.ctx.fillRect(...this.anchorAbs.xy, this.xDrawSize, 30)
 
         this.ctx.fillStyle="#B5D"
-        this.ctx.fillRect(...this.anchorAbs.xy, this.barAnima.fillFrac * 480, 25)
+        this.ctx.fillRect(...this.anchorAbs.xy, this.barAnima.valueFrac * this.xDrawSize, 25)
 
-        this.renderer.drawChars("enhel", ...this.anchorAbs.xy)
+        this.renderer.drawChars(`${Math.trunc(this.barAnima.value)}`, ...this.anchorAbs.xy)
     }
 }
 
@@ -333,10 +334,44 @@ export class AdvancingActionWarp {
 
 }
 
+export class BattleRunner {
+    constructor(node) {
+        this.node = node
+    }
+    get battle () { return this.node.battle }
+
+    doSubmitAction(action) {
+        if (this.battle.curTurn.canSubmitAction(action)) {
+            let rolledAction = action.roll()
+            rolledAction.doApply(this)
+            this.node.activeWarpPanel = this.node.messageTickerPanel
+            this.node.actionMenu.selectedIndex = null
+            return true
+        } else {
+            console.log("Unable to submit action!")
+            return false
+        }
+    }
+
+    doCompleteAction(action) {
+        this.battle.advanceTurn()
+        this.battle.curTurn.doRequestActionFrom(this)
+    }
+
+    addTickerMessage(messageText) {
+        this.node.messageTickerPanel.addMessage(messageText)
+    }
+    dealDamageTo(damage, monster) {
+        this.node.lookupHealthBar(monster).takeDamage(damage)
+    }
+
+}
+
 export class BattleNode extends nodes.Node {
     constructor(battle) {
         super(battle.state)
         this.battle = battle
+        this.bRunner = new BattleRunner(this)
 
         this.actionMenu = new ActionMenu(this)
         this.actionMenu.anchorPos = vecs.Vec2(12, 48)
@@ -354,7 +389,7 @@ export class BattleNode extends nodes.Node {
         this.playerHealthBar.anchorPos = vecs.Vec2(6,6)
 
         this.enemyHealthBar = new EnemyHealthBar(this)
-        this.enemyHealthBar.anchorPos = vecs.Vec2(490,6)
+        this.enemyHealthBar.anchorPos = vecs.Vec2(500,6)
 
         this.messageTickerPanel = new MessageTickerPanel(this)
         this.messageTickerPanel.anchorPos = vecs.Vec2(480, 504)
@@ -378,23 +413,6 @@ export class BattleNode extends nodes.Node {
     doActionMenu() {
         this.activeWarpPanel = this.actionMenu
         this.actionMenu.doRefresh()
-    }
-
-    doSubmitAction(action) {
-        if (this.battle.curTurn.canSubmitAction(action)) {
-            let rolledAction = action.roll()
-            rolledAction.doApply(this)
-            this.activeWarpPanel = this.messageTickerPanel
-            return true
-        } else {
-            console.log("Unable to submit action!")
-            return false
-        }
-    }
-
-    doCompleteAction(action) {
-        this.battle.advanceTurn()
-        this.battle.curTurn.doRequestActionFrom(this)
     }
 
     warpKeydown(event) {
