@@ -14,6 +14,7 @@ export class Scion {
     get renMS() { return this.renderer.renMS }
 
     get anchorAbs() { return this.anchorPos.add(this.parent.anchorAbs)  }
+    anchorAbsShift(x,y) { return this.anchorAbs.add(vecs.Vec2(x, y)) }
 
     preDrawTick(){
         this.preDrawTickContents()

@@ -7,7 +7,7 @@ export class Monster {
         console.log("Called CM", tank, "DN", dnaString, "this", this)
         this.tank = tank
         this.dnaString = dnaString
-        this.name = this.state.nameMaker.NAME( utils.easyHash(this.dnaString.chars) )
+        this.monName = this.state.nameMaker.NAME( utils.easyHash(this.dnaString.chars) )
 
         this.baseMutation = new mutations.Basic(0,0,0,0)
     }
@@ -64,11 +64,11 @@ export class MonsterFight {
 }
 
 export class EnemyMonster {
-    constructor (a,e,i,s, name) {
+    constructor (a,e,i,s, monName) {
         this.agility=a
         this.endurance=e
         this.intellect=i
         this.strength=s
-        this.name = name
+        this.monName = monName
     }
 }

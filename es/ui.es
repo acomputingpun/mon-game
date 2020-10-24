@@ -209,7 +209,7 @@ export class Renderer {
         }
         this.ctx.fillText(line, xDraw, yDraw+yShift)
         yShift += yLineHeight
-        return yShift
+        return yDraw+yShift
     }
 
     drawGene(gene, xDraw, yDraw, pSize=6) {
@@ -218,11 +218,14 @@ export class Renderer {
     }
 
     drawChars(chars, xDraw, yDraw, pSize=6) {
+        let yShift = 0
         for (let char of chars.toUpperCase()) {
             let charSprite = this.img[`txt_${char.charCodeAt(0)}__${pSize}`] || this.img[`txt_UNDEF_${pSize}`]
             this.ctx.drawImage(charSprite, xDraw, yDraw)
             xDraw += (charSprite.width + pSize)
+            yShift = Math.max(yShift, charSprite.height + pSize)
         }
+        return [xDraw, yDraw+yShift]
     }
 
     yRepeated(img, height) {

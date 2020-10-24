@@ -36,8 +36,8 @@ export class Node extends drawscions.Ancestor {
         this.ctx.textBaseline = "top"
         this.ctx.textAlign = "center"
 
-        this.ctx.fillText(monster.name, xDraw+175, yDraw+10)
- 
+        this.ctx.fillText(monster.monName, xDraw+175, yDraw+10)
+
         this.ctx.strokeRect(xDraw+10, yDraw+50, 330, 30)
         this.ctx.strokeRect(xDraw+10, yDraw+90, 330, 30)
         this.ctx.strokeRect(xDraw+10, yDraw+130, 330, 30)
@@ -67,7 +67,7 @@ export class MenuNode extends Node {
     get xyMenuShift() { return [0, 50] }
     get xMenuShift() { return this.xyMenuShift[0] }
     get yMenuShift() { return this.xyMenuShift[1] }
-    get font() { return fonts.MENU_TEXT } 
+    get font() { return fonts.MENU_TEXT }
 
     drawContents() {
         this.drawHud()

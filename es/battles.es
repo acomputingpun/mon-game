@@ -14,6 +14,7 @@ export class BattleMonster {
         this.monster = monster
 
         this.health = 100
+        this.tempTags = []
 
         this.possibleActions = [new actions.BodySlam(this), new actions.Crush(this), new actions.Overwhelm(this)]
     }
@@ -29,7 +30,7 @@ export class BattleMonster {
     }
 
     get shortName() {
-        return this.monster.name
+        return this.monster.monName
     }
 
     canSubmitAction(action) {
@@ -45,12 +46,22 @@ export class BattleMonster {
             return this.monster.strength
         } else if (statName == "endurance") {
             return this.monster.endurance
+        } else if (statName == "agility") {
+            return this.monster.agility
+        } else if (statName == "intellect") {
+            return this.monster.intellect
         } else {
             throw `Error - lookup of invald stat value ${statName}`
         }
     }
-}
 
+    get strValue() { return this.lookupStatValue("strength") }
+    get agiValue() { return this.lookupStatValue("agility") }
+    get endValue() { return this.lookupStatValue("endurance") }
+    get intValue() { return this.lookupStatValue("intellect") }
+//    get tags() { return [...this.monster.getInnateTags(), ...this.tempTags] }
+
+}
 export class PlayerBattleMonster extends BattleMonster {
     doRequestActionFrom(bRunner) {
         console.log("Completed enemy turn, now player turn to choose action!")
@@ -141,11 +152,22 @@ class ActionMenu extends menus.MenuPanel {
 }
 
 class ActionFocusPanel extends drawscions.Scion {
+    constructor(parent) {
+        super(parent)
+        this.curText = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    }
+
     drawContents() {
         this.ctx.fillStyle="#FCC"
         this.ctx.fillRect(...this.anchorAbs.xy, 400, 400)
 
-        this.renderer.drawChars("hajrttes", ...this.anchorAbs.xy)
+        if (this.curText == null) {
+            this.ctx.fillStyle="#101"
+            this.renderer.wrapText( "null?" , ...this.anchorAbs.xy, 400, 400 )
+        } else {
+            this.ctx.fillStyle="#101"
+            this.renderer.wrapText( this.curText, ...this.anchorAbs.xy, 400, 400 )
+        }
 
         super.drawContents()
     }
@@ -185,9 +207,9 @@ class MessageTickerPanel extends drawscions.Scion {
         super.drawContents()
 
         this.ctx.fillStyle="#000"
-        let yPos = this.anchorAbs.y
+        let yDraw = this.anchorAbs.y
         for (let message of this.messages) {
-            yPos += this.renderer.wrapText(message.visibleText, this.anchorAbs.x, yPos, 600, 10)
+            yDraw = this.renderer.wrapText(message.visibleText, this.anchorAbs.x, yDraw, 600, 10)
         }
     }
 
@@ -231,10 +253,19 @@ class MonsterStatsPanel extends drawscions.Scion {
     drawContents() {
         this.ctx.fillStyle="#AB0"
         this.ctx.fillRect(...this.anchorAbs.xy, 400, 400)
-        this.renderer.drawChars("monstatspanel", ...this.anchorAbs.xy)
 
-        super.drawContents()
+        let _discard = null
+        let [drawX, drawY] = this.anchorAbs.xy
+        drawY += 10; // If you remove this semicolon, Javascript can't parse the destructuring in the next line
+        [, drawY] = this.renderer.drawChars(this.monster.shortName, drawX+10, drawY);
+
+        [, drawY] = this.renderer.drawChars(`STR ${this.monster.strValue}`, drawX+10, drawY);
+        [, drawY] = this.renderer.drawChars(`AGI ${this.monster.agiValue}`, drawX+10, drawY);
+        [, drawY] = this.renderer.drawChars(`INT ${this.monster.intValue}`, drawX+10, drawY);
+        [, drawY] = this.renderer.drawChars(`END ${this.monster.endValue}`, drawX+10, drawY);
     }
+
+    get monster() { return this.parent.battle.playerMonster }
 }
 
 class MapPanel extends drawscions.Scion {

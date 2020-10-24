@@ -14,6 +14,8 @@ export class BattleAction {
 
     get shortText() { throw "To be overridden!" }
     get shortName() { return "?UNDEF ACTION?" }
+
+    get longText() { return "This is a long section of action-related text!  It says A, B, C, D, E, F, G, H, I, J, K, L, M, N, and so on!"}
 }
 
 class AttackAction extends BattleAction {

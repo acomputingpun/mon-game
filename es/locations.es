@@ -2,9 +2,9 @@ import * as monsters from '/es/monsters.es'
 import * as menus from '/es/menus.es'
 
 export class Location {
-    constructor(city, name, xyPos, monster) {
+    constructor(city, locName, xyPos, monster) {
         this.city = city
-        this.name = name
+        this.locName = locName
         this.xyPos = xyPos
         this.monster = monster
         this.reward = 0

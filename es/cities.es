@@ -18,7 +18,7 @@ export class City {
             new locations.MonsterIsland(this, [800, 550])
         ]
     }
-    
+
     createNode(monster) {
         if (monster == null) {
             return new ViewCityNode(this)
@@ -62,7 +62,7 @@ export class AttackCityNode extends GeneralCityNode {
         this.menuItems.push(new menus.MenuItem("return to lab", null))
 
         for(let location of this.city.locations) {
-            this.menuItems.push(new menus.MenuItem(`${location.name}`, location))
+            this.menuItems.push(new menus.MenuItem(`${location.locName}`, location))
         }
     }
 
@@ -82,7 +82,7 @@ export class AttackCityNode extends GeneralCityNode {
         } else {
             console.log("choosing")
             this.state.curNode = this.monster.tank.createNode()
-        }        
+        }
     }
 
 }
@@ -112,7 +112,7 @@ export class AttackLocationNode extends GeneralCityNode{
     }
 
     drawMonsterFight(xDraw, yDraw, fight) {
-        this.drawMonsterStats(xDraw+25, yDraw+25, fight.attacker)    
+        this.drawMonsterStats(xDraw+25, yDraw+25, fight.attacker)
         this.drawMonsterStats(xDraw+425, yDraw+25, fight.defender)
 
         this.ctx.strokeStyle=colours.MAIN_TEXT
