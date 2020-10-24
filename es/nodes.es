@@ -61,7 +61,7 @@ export class MenuNode extends Node {
     constructor(state) {
         super(state)
         this.menuItems = []
-        this.selectedIndex = 0
+        this.highlightedIndex = 0
     }
 
     get xyMenuShift() { return [0, 50] }
@@ -117,18 +117,18 @@ export class MenuNode extends Node {
     }
     warpArrowKey(dir) {
         if (dir.xy == dirconst.S.xy) {
-            this.shiftSelectedIndex(1)
+            this.shiftHighlightedIndex(1)
         } else if (dir.xy == dirconst.N.xy) {
-            this.shiftSelectedIndex(-1)
+            this.shiftHighlightedIndex(-1)
         }
     }
     warpSelectKey(dir) {
-        this.warpMenuSelectIndex(this.selectedIndex)
+        this.warpMenuSelectIndex(this.highlightedIndex)
     }
-    shiftSelectedIndex(delta) {
-        this.selectedIndex = utils.median3(0, (this.selectedIndex + delta), this.menuItems.length-1)
+    shiftHighlightedIndex(delta) {
+        this.highlightedIndex = utils.median3(0, (this.highlightedIndex + delta), this.menuItems.length-1)
     }
-    get selectedMenuItem() { return this.menuLookup(this.selectedIndex) }
+    get highlightedData() { return this.menuLookup(this.highlightedIndex) }
 
     warpMenuSelectIndex(index) {
         let menuItem = this.menuLookup(index)

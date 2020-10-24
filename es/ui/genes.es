@@ -69,24 +69,24 @@ export class AbstractSelectGenesPanel extends AbstractViewGenesPanel {
     constructor(parent) {
         super(parent)
         this.highlightFlyer = new GeneHighlightFlyer(this)
-        this._selectedIndex = null
+        this._highlightedIndex = null
         this.children = []
     }
 
-    get selectedIndex() { return this._selectedIndex }
-    get selectedGene() { return this.genes[this.selectedIndex] }
+    get highlightedIndex() { return this._highlightedIndex }
+    get selectedGene() { return this.genes[this.highlightedIndex] }
 
-    set selectedIndex(data) {
+    set highlightedIndex(data) {
         if (data == null) {
             this.children = []
         } else {
-            this._selectedIndex = data
+            this._highlightedIndex = data
             this.highlightFlyer.anchorPos = this.geneLocal(data)
             this.children = [this.highlightFlyer]
         }
     }
-    shiftSelectedIndex(delta) {
-        this.selectedIndex = utils.median3(0, (this.selectedIndex + delta), this.genes.length-1)
+    shiftHighlightedIndex(delta) {
+        this.highlightedIndex = utils.median3(0, (this.highlightedIndex + delta), this.genes.length-1)
     }
 }
 

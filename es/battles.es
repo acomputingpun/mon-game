@@ -109,9 +109,9 @@ class ActionMenu extends menus.MenuPanel {
     constructor(parent) {
         super(parent)
 
+        console.log("ON CREATE, TP this.parent is", this.parent)
+
         this.menuItems = []
-        this.refreshMenuItems()
-        this.selectedIndex = 0
     }
 
     get battle() { return this.parent.battle }
@@ -123,12 +123,18 @@ class ActionMenu extends menus.MenuPanel {
     }
 
     doSelect() {
-        this.parent.bRunner.doSubmitAction(this.selectedMenuItem.data)
+        this.parent.bRunner.doSubmitAction(this.highlightedData)
     }
     doRefresh() {
         // TODO: Does an animation to flicker the menu as it repopulates itself
         this.refreshMenuItems()
-        this.selectedIndex = 0
+        this.setHighlightedIndex(0)
+    }
+
+    setHighlightedIndex(value) {
+        super.setHighlightedIndex(value)
+        console.log("this.parent is", this.parent)
+        this.parent.actionFocusPanel.doRefresh()
     }
 
     drawContents() {
@@ -138,7 +144,7 @@ class ActionMenu extends menus.MenuPanel {
     }
     drawMenuItem(drawAbs, index) {
         let menuItem = this.menuItems[index]
-        if (index == this.selectedIndex) {
+        if (index == this._highlightedIndex) {
             this.ctx.fillStyle="#0C0"
         } else {
             this.ctx.fillStyle="#CF0"
@@ -155,6 +161,13 @@ class ActionFocusPanel extends drawscions.Scion {
     constructor(parent) {
         super(parent)
         this.curText = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    }
+
+    doRefresh() {
+        let highlightedAction = this.parent.actionMenu.highlightedData
+        if (highlightedAction != null) {
+            this.curText = highlightedAction.longText
+        }
     }
 
     drawContents() {
@@ -376,7 +389,7 @@ export class BattleRunner {
             let rolledAction = action.roll()
             rolledAction.doApply(this)
             this.node.activeWarpPanel = this.node.messageTickerPanel
-            this.node.actionMenu.selectedIndex = null
+            this.node.actionMenu.clearHighlightedIndex()
             return true
         } else {
             console.log("Unable to submit action!")
@@ -429,7 +442,7 @@ export class BattleNode extends nodes.Node {
 
         this.advanceBattleWarp = new AdvancingActionWarp(this)
 
-        this.activeWarpPanel = this.actionMenu
+        this.doActionMenu()
     }
 
 //    get lab() { return this.tank.lab }

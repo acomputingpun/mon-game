@@ -240,22 +240,22 @@ export class CurrentStringSelectorFlyer extends ui_genes.AbstractSelectGenesPane
 
     constructor(parent) {
         super(parent)
-        this.selectedIndex = 0
-
         this.highlightFlyer = new SideInjectorFlyer(this)
         this.children = [this.highlightFlyer]
+
+        this.setHighlightedIndex(0)
     }
 
     warpArrowKey(dir) {
         if (dir.xy == dirconst.S.xy) {
-            this.shiftSelectedIndex(1)
+            this.shiftHighlightedIndex(1)
         } else if (dir.xy == dirconst.N.xy) {
-            this.shiftSelectedIndex(-1)
+            this.shiftHighlightedIndex(-1)
         }
     }
     doSelect() {
         this.parent.activeWarpPanel = this.parent.insertSelector
-        this.parent.insertSelector.selectedIndex = this.parent.insertSelector.genes.indexOf(this.selectedGene)
+        this.parent.insertSelector.setHighlightedIndex( this.parent.insertSelector.genes.indexOf(this.selectedGene) )
         this.parent.refreshAdjustedString()
     }
     doCancel() {
@@ -286,15 +286,15 @@ export class InsertSelectorFlyer extends ui_genes.AbstractSelectGenesPanel {
         this.children = [this.highlightFlyer]
     }
 
-    shiftSelectedIndex(delta) {
-        super.shiftSelectedIndex(delta)
+    setHighlightedIndex(value) {
+        super.setHighlightedIndex(value)
         this.parent.refreshAdjustedString()
     }
     warpArrowKey(dir) {
         if (dir.xy == dirconst.S.xy) {
-            this.shiftSelectedIndex(1)
+            this.shiftHighlightedIndex(1)
         } else if (dir.xy == dirconst.N.xy) {
-            this.shiftSelectedIndex(-1)
+            this.shiftHighlightedIndex(-1)
         }
     }
 
@@ -314,11 +314,11 @@ export class InsertSelectorFlyer extends ui_genes.AbstractSelectGenesPanel {
     }
     doCancel() {
         this.parent.activeWarpPanel = this.parent.curStringSelector
-        this.selectedIndex = null
+        this.clearHighlightedIndex()
         this.parent.refreshAdjustedString()
     }
     get selectedGene() {
-        return this.genes[this.selectedIndex]
+        return this.genes[this.highlightedIndex]
     }
     nwCrossAbs(index) { return this.nwGeneAbs(index).add(vecs.Vec2(-24, 18)) }
     nwDigitAbs(index) { return this.nwGeneAbs(index).add(vecs.Vec2(-72, 12)) }
@@ -404,7 +404,7 @@ export class EditStringNode extends GeneralTankNode {
         if (this.activeWarpPanel == this.curStringSelector) {
             this._adjustedString = this.monster.dnaString
         } else {
-            this._adjustedString = this.monster.dnaString.replace(this.curStringSelector.selectedIndex, this.insertSelector.selectedGene)
+            this._adjustedString = this.monster.dnaString.replace(this.curStringSelector.highlightedIndex, this.insertSelector.selectedGene)
         }
         this.mutsFlyer.refreshMuts()
     }

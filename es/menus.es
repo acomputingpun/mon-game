@@ -13,16 +13,29 @@ export class MenuPanel extends drawscions.Scion {
     constructor(parent) {
         super(parent)
         this.menuItems = []
+        this._highlightedIndex = null
     }
 
-    shiftSelectedIndex(delta) {
-        this.selectedIndex = utils.median3(0, (this.selectedIndex + delta), this.menuItems.length-1)
+    get highlightedIndex() { return this._highlightedIndex }
+
+    shiftHighlightedIndex(delta) {
+        this.setHighlightedIndex(utils.median3(0, (this._highlightedIndex + delta), this.menuItems.length-1))
+    }
+    setHighlightedIndex(value) {
+        this._highlightedIndex = value
+    }
+    clearHighlightedIndex() {
+        this._highlightedIndex = null
     }
     warpArrowKey(dir) {
-        if (dir.xy == dirconst.S.xy) {
-            this.shiftSelectedIndex(1)
-        } else if (dir.xy == dirconst.N.xy) {
-            this.shiftSelectedIndex(-1)
+        if (this._highlightedIndex == null) {
+            throw `Can't shift selected index in menu ${this}, it's null!`
+        } else {
+            if (dir.xy == dirconst.S.xy) {
+                this.shiftHighlightedIndex(1)
+            } else if (dir.xy == dirconst.N.xy) {
+                this.shiftHighlightedIndex(-1)
+            }
         }
     }
 
@@ -44,8 +57,11 @@ export class MenuPanel extends drawscions.Scion {
     doCancel() {
         throw "To be overridden!"
     }
-    get selectedMenuItem() {
-        return this.menuItems[this.selectedIndex]
+    get highlightedData() {
+        if (this._highlightedIndex != null) {
+            return this.menuItems[this._highlightedIndex].data
+        } else {
+            return null
+        }
     }
 }
-
